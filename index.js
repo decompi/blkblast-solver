@@ -1,7 +1,12 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron");
-const path = require("node:path");
+const { app, BrowserWindow, ipcMain, desktopCapturer } = require("electron")
+const path = require("node:path")
+const fs = require("node:fs")
 
 let mainWindow;
+
+const configPath = path.join(__dirname, "config.json")
+const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
+
 
 app.whenReady().then(() => {
     mainWindow = new BrowserWindow({
@@ -14,23 +19,25 @@ app.whenReady().then(() => {
             webviewTag: true,
             nodeIntegrationInSubFrames: true
         }        
-    });
+    })
 
-    mainWindow.loadFile("index.html");
+    mainWindow.loadFile("index.html")
+
 
     async function captureScreen() {
         const sources = await desktopCapturer.getSources({
             types: ["window"],
             thumbnailSize: { width: 1920, height: 1080 }
-        });
+        })
 
-        const letsViewWindow = sources.find(source => source.name.includes("LetsView [Cast]"));
+        const mirrorWindow = sources.find(source => source.name.includes(config.windowName))
 
-        if (letsViewWindow) {
-            return letsViewWindow.thumbnail.toDataURL();
+        if(mirrorWindow) {
+            return mirrorWindow.thumbnail.toDataURL()
         }
-        return null;
+
+        return null
     }
 
     ipcMain.handle("capture-screen", captureScreen);
-});
+})
